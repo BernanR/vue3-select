@@ -1,5 +1,5 @@
 <style>
-@import '../css/vue-select.css';
+/* @import '../css/vue-select.css'; */
 </style>
 
 <template>
@@ -7,13 +7,14 @@
     <slot name="header" v-bind="scope.header" />
     <div
       :id="`vs${uid}__combobox`"
-      ref="toggle"
-      class="vs__dropdown-toggle"
-      role="combobox"
+      :class="[{[inputClass]:!dropdownOpen}, {[inputClassOpened]:dropdownOpen}]"
       :aria-expanded="dropdownOpen.toString()"
       :aria-owns="`vs${uid}__listbox`"
       :aria-label="ariaLabel"
       v-click-outside="clickOutside"
+      role="combobox"
+      class="vs__dropdown-toggle"
+      ref="toggle"
       @mousedown="toggleDropdown($event)"
     >
       <div ref="selectedOptions" class="vs__selected-options">
@@ -53,6 +54,7 @@
             v-bind="scope.search.attributes"
             v-on="scope.search.events"
           />
+          <!-- v-on="scope.search.events" -->
         </slot>
       </div>
 
@@ -91,6 +93,7 @@
         :key="`vs${uid}__listbox`"
         v-append-to-body
         class="vs__dropdown-menu"
+        :class="ulClass"
         role="listbox"
         tabindex="-1"
         @mousedown.prevent="onMousedown"
@@ -102,17 +105,17 @@
           :id="`vs${uid}__option-${index}`"
           :key="getOptionKey(option)"
           role="option"
-          :class="{
+          :class="[{
             'vs__dropdown-option': !isOptGroupOption(option),
             'vs__dropdown-optgroup-option': isOptGroupOption(option),
             'vs__dropdown-option--deselect':
               isOptionDeselectable(option) && index === typeAheadPointer,
             'vs__dropdown-option--selected': isOptionSelected(option),
-            'vs__dropdown-option--highlight':
+            [liActiveClass] :
               (!isOptGroupOption(option) && index === typeAheadPointer) ||
               isOptionSelected(option),
             'vs__dropdown-option--disabled': !selectable(option),
-          }"
+          }, liClass]"
           :aria-selected="index === typeAheadPointer ? true : null"
           @mouseover="selectable(option) ? updateTypeAheadPointer(index) : null"
           @click.prevent.stop="selectable(option) ? select(option) : null"
@@ -127,9 +130,9 @@
             {{ getOptionLabel(option) }}
           </slot>
         </li>
-        <li v-if="filteredOptions.length === 0" class="vs__no-options">
+        <li v-if="filteredOptions.length === 0" class="vs__no-options" :class="liClass">
           <slot name="no-options" v-bind="scope.noOptions">
-            Sorry, no matching options.
+            {{ noFoundMessageText }}
           </slot>
         </li>
         <slot name="list-footer" v-bind="scope.listFooter" />
@@ -146,14 +149,14 @@
 </template>
 
 <script>
-import pointerScroll from '@/mixins/pointerScroll.js'
-import typeAheadPointer from '@/mixins/typeAheadPointer.js'
-import ajax from '@/mixins/ajax.js'
-import childComponents from '@/components/childComponents.js'
-import appendToBody from '@/directives/appendToBody.js'
-import clickOutside from '@/directives/clickOutside.js'
-import sortAndStringify from '@/utility/sortAndStringify.js'
-import uniqueId from '@/utility/uniqueId.js'
+import pointerScroll from '../mixins/pointerScroll.js'
+import typeAheadPointer from '../mixins/typeAheadPointer.js'
+import ajax from '../mixins/ajax.js'
+import childComponents from '../components/childComponents.js'
+import appendToBody from '../directives/appendToBody.js'
+import clickOutside from '../directives/clickOutside.js'
+import sortAndStringify from '../utility/sortAndStringify.js'
+import uniqueId from '../utility/uniqueId.js'
 
 /**
  * @name VueSelect
@@ -222,6 +225,59 @@ export default {
         return []
       },
     },
+
+    /**
+     * constumize the input field by classes that allow use tailwind classes
+     * @type {String}
+     */
+      inputClass: {
+        type : String,
+        default: 'vs__style'
+    },
+    /**
+     * constumize the input field by classes that allow use tailwind classes when the box is opened
+     * @type {String}
+     */
+     inputClassOpened: {
+        type : String,
+        default: ''
+    },
+    
+    /**
+     * constumize the dropbox list by classes that allow use tailwind classes for example
+     * @type {String}
+     */
+      ulClass: {
+        type : String,
+        default: 'vs__ul__style'
+    },
+
+    /**
+     * constumize the dropbox list's items by classes that allow use tailwind classes for example
+     * @type {String}
+     */
+      liClass: {
+        type : String,
+        default: 'vs__li__style'
+    },
+
+      /**
+     * constumize the dropbox list's items by classes that allow use tailwind classes for example
+     * @type {String}
+     */
+     liActiveClass: {
+        type : String,
+        default: 'vs__dropdown-option--highlight'
+    },   
+
+          /**
+     * constumize the dropbox list's items by classes that allow use tailwind classes for example
+     * @type {String}
+     */
+     noFoundMessageText: {
+        type : String,
+        default: 'Sorry, no matching options.'
+    },  
 
     /**
      * Disable the entire component.
